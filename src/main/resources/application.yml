@@ -1,0 +1,102 @@
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+    # cookie 30 天过期
+    session:
+      cookie:
+        max-age: 2592000
+spring:
+  #支持延迟加载
+  main:
+    allow-circular-references: true
+  # 数据源配置（生产环境优化）
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+  # 空间图片分表
+  shardingsphere:
+    datasource:
+      names: yun_picture
+      yun_picture:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: ${MYSQL_URL:jdbc:mysql://localhost:3306/yun_picture}
+        username: ${MYSQL_USERNAME:root}
+        password: ${MYSQL_PASSWORD:}
+    rules:
+      sharding:
+        tables:
+          picture:
+            actual-data-nodes: yun_picture.picture  # 动态分表
+            table-strategy:
+              standard:
+                sharding-column: spaceId
+                sharding-algorithm-name: picture_sharding_algorithm  # 使用自定义分片算法
+        sharding-algorithms:
+          picture_sharding_algorithm:
+            type: CLASS_BASED
+            props:
+              strategy: standard
+              algorithmClassName: com.yuntuku.yunbackend.manager.sharding.PictureShardingAlgorithm
+    props:
+      sql-show: false
+  # session 配置
+  session:
+    store-type: redis
+    # session 30 天过期
+    timeout: 2592000
+  application:
+    name: yun-picture-backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
+
+  # Redis 配置
+  redis:
+    database: 0
+    host: ${REDIS_HOST:localhost}
+    port: 6379
+    timeout: 5000
+    password: ${REDIS_PASSWORD:}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: false
+    #只在开发环境打日志#org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: ''
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+
+#接口文档配置
+knife4j:
+  enable: true  # 添加这一行！必须开启
+  basic:
+    enable: true
+    username: root
+    password: ${KNIFE4J_PASSWORD:}
+  openapi:
+    title: 接口文档
+    version: 1.0
+    group:
+      default:
+        group-name: 默认分组
+        api-rule: package
+        api-rule-resources: com.yuntuku.yunbackend.controller
+cos:
+  client:
+    host: ${COS_HOST:}
+    secretId: ${COS_SECRET_ID:}
+    secretKey: ${COS_SECRET_KEY:}
+    region: ap-guangzhou
+    bucket: ${COS_BUCKET:}
+
+# 阿里云 AI 配置
+aliYunAi:
+  apiKey: ${ALIYUN_AI_API_KEY:}
